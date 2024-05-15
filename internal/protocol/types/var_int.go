@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"errors"
 	"io"
 )
@@ -39,16 +38,6 @@ func (v *VarInt) ReadFrom(r io.Reader) (n int64, err error) {
 	*v = VarInt(val)
 
 	return
-}
-
-func (v VarInt) MarshalBinary() ([]byte, error) {
-	buf := bytes.NewBuffer(nil)
-	_, err := v.WriteTo(buf)
-	if err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }
 
 // Implement io.Writer for VarInt

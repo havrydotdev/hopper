@@ -1,7 +1,7 @@
 package server
 
 import (
-	"encoding"
+	"bytes"
 	"io"
 
 	"havry.dev/havry/hopper/internal/protocol/types"
@@ -43,26 +43,60 @@ func ReadPacketInfo(r io.Reader) (size, packetID types.VarInt, err error) {
 	return
 }
 
-func WriteResp(w io.Writer, packetID int, resp encoding.BinaryMarshaler) (size types.VarInt, err error) {
-	respEncoded, err := resp.MarshalBinary()
+func WritePacket(w io.Writer, packetID int, p io.WriterTo) (size types.VarInt, err error) {
+	// marshal packet
+	buf, err := MarshalPacket(packetID, p)
 	if err != nil {
 		return nilVarInt, err
 	}
 
-	packetIdEncoded, err := types.VarInt(packetID).MarshalBinary()
+	return WriteRaw(w, buf)
+}
+
+// Writes buf to io.Writer, appending it's length with types.VarInt
+func WriteRaw(w io.Writer, buf []byte) (size types.VarInt, err error) {
+	res := bytes.NewBuffer(nil)
+	size = types.VarInt(len(buf))
+	// write response size to buffer
+	_, err = size.WriteTo(w)
 	if err != nil {
 		return nilVarInt, err
 	}
 
-	size = types.VarInt(len(respEncoded) + len(packetIdEncoded))
-	sizeEncoded, err := size.MarshalBinary()
+	// write response body to buffer
+	_, err = res.Write(buf)
 	if err != nil {
 		return nilVarInt, err
 	}
 
-	res := append(sizeEncoded, packetIdEncoded...)
-	res = append(res, respEncoded...)
-	_, err = w.Write(res)
+	// write all buffer content to w
+	_, err = w.Write(res.Bytes())
 
-	return size, err
+	return
+}
+
+func MarshalPacket(id int, p io.WriterTo) ([]byte, error) {
+	buf := bytes.NewBuffer(nil)
+	// write packet id into buf
+	_, err := types.VarInt(id).WriteTo(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	// write packet's content into buf
+	_, err = p.WriteTo(buf)
+
+	return buf.Bytes(), err
+}
+
+func PrependID(id int, p []byte) ([]byte, error) {
+	res := bytes.NewBuffer(nil)
+	_, err := types.VarInt(id).WriteTo(res)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = res.Write(p)
+
+	return res.Bytes(), err
 }

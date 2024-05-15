@@ -1,9 +1,10 @@
 package server
 
 import (
+	"io"
 	"net"
 
-	"havry.dev/havry/hopper/internal/protocol/resp"
+	"havry.dev/havry/hopper/internal/protocol/packet"
 	"havry.dev/havry/hopper/internal/protocol/types"
 )
 
@@ -21,26 +22,29 @@ func (h *Hopper) status(conn net.Conn) error {
 
 		switch int(packetID) {
 		case PingPacketID:
-			var ping types.Long
-			_, err = ping.ReadFrom(conn)
+			payload := make([]byte, types.LongBytes)
+			_, err = io.ReadFull(conn, payload)
 			if err != nil {
-				return err
+				break
 			}
 
-			_, err = WriteResp(conn, PingPacketID, resp.NewPing(int64(ping)))
+			var body []byte
+			body, err = PrependID(PingPacketID, payload)
+			if err != nil {
+				break
+			}
+
+			_, err = WriteRaw(conn, body)
 		case ListPacketID:
-			var handshake *resp.Handshake
-			handshake, err = resp.NewHandshake(resp.Players{
-				Max:    20,
+			players := packet.Players{
+				Max:    h.Config.Motd.MaxPlayers,
 				Online: 0,
-			}, resp.Description{
-				Text: "PEREMOGA BUDEEEE URAAAA",
-			}, nil)
-			if err != nil {
-				return err
 			}
 
-			_, err = WriteResp(conn, ListPacketID, handshake)
+			_, err = WritePacket(conn,
+				ListPacketID,
+				packet.NewList(h.Config.Motd.Description, players, h.favicon),
+			)
 		}
 
 		if err != nil {

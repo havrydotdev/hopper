@@ -27,6 +27,9 @@ func (h *Hopper) handleConn(conn net.Conn) error {
 	switch int(p.NextState) {
 	case StatusState:
 		return h.status(conn)
+	// TODO implement
+	case LoginState:
+		return nil
 	}
 
 	return nil
