@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 
 	"havry.dev/havry/hopper/internal/config"
 	"havry.dev/havry/hopper/internal/server"
@@ -16,8 +17,13 @@ func main() {
 
 	cfg, err := config.Read(configPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to read config: ", err)
 	}
+
+	// initialize hopper logger
+	cfg.InitLogger()
+
+	slog.Info("Config is valid")
 
 	err = server.New(cfg, nil).Listen()
 	if err != nil {

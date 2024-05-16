@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 
 	"havry.dev/havry/hopper/internal/config"
@@ -30,29 +30,39 @@ func New(
 	}
 }
 
+// returns address to start on
+func (h *Hopper) Addr() string {
+	return fmt.Sprintf("0.0.0.0:%d", h.Config.Server.Port)
+}
+
 func (h *Hopper) Listen() error {
+	serverAddr := h.Addr()
+
 	// open tcp server on specified port
-	listener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", h.Config.Server.Port))
+	listener, err := net.Listen("tcp", serverAddr)
 	if err != nil {
 		return err
 	}
 	defer listener.Close()
 
-	log.Printf("Hopper Server Is Listening On 0.0.0.0:%d", h.Config.Server.Port)
+	slog.Info(fmt.Sprintf("Hopper Server Is Listening On %s", serverAddr))
+
 	// start listening for tcp connections
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			// TODO replace with custom logger
-			log.Print("Error occurred while handling tcp conn: " + err.Error())
+			slog.Error("Error occurred while handling tcp conn: " + err.Error())
 			continue
 		}
 
+		slog.Debug("New client connected", slog.String("addr", conn.RemoteAddr().String()))
+
 		// handle connection in separate goroutine
 		go func() {
-			err := h.handleConn(conn)
+			err := h.handshake(conn)
 			if err != nil {
-				log.Println(err)
+				slog.Error(err.Error())
 			}
 		}()
 	}

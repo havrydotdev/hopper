@@ -1,5 +1,10 @@
 package config
 
+import (
+	"log/slog"
+	"os"
+)
+
 type Server struct {
 	Port uint `toml:"port"`
 }
@@ -22,13 +27,42 @@ type Config struct {
 
 func Default() *Config {
 	cfg := new(Config)
+
+	// server options
 	cfg.Server.Port = 25565
 
+	// logger options
 	cfg.Logging.Level = "INFO"
 
+	// MOTD options
 	cfg.Motd.MaxPlayers = 20
 	cfg.Motd.Description = "Hopper Minecraft Server"
 	cfg.Motd.FaviconPath = "favicon.png"
 
 	return cfg
+}
+
+func (c *Config) InitLogger() {
+	handler := slog.NewTextHandler(os.Stdout, c.LoggerOptions())
+	slog.SetDefault(slog.New(handler))
+}
+
+func (c *Config) LoggerOptions() *slog.HandlerOptions {
+	opts := new(slog.HandlerOptions)
+	opts.Level = c.LogLevel()
+
+	return opts
+}
+
+func (c *Config) LogLevel() slog.Leveler {
+	switch c.Logging.Level {
+	case "DEBUG":
+		return slog.LevelDebug
+	case "WARN":
+		return slog.LevelInfo
+	case "ERROR":
+		return slog.LevelError
+	}
+
+	return slog.LevelInfo
 }
