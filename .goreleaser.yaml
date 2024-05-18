@@ -22,6 +22,8 @@ builds:
       - linux
       - windows
       - darwin
+    
+    dir: cmd
 
 archives:
   - format: tar.gz
