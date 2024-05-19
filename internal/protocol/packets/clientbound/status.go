@@ -1,4 +1,4 @@
-package packet
+package cbound
 
 import (
 	"encoding/json"
@@ -11,14 +11,6 @@ const (
 	version  = "1.20.4"
 	protocol = 765
 )
-
-type Ping struct {
-	Payload types.Long
-}
-
-func (s *Ping) ReadFrom(r io.Reader) (int64, error) {
-	return s.Payload.ReadFrom(r)
-}
 
 type Players struct {
 	Max    uint `json:"max"`

@@ -4,7 +4,7 @@ import (
 	"io"
 	"net"
 
-	"havry.dev/havry/hopper/internal/protocol/packet"
+	cbound "havry.dev/havry/hopper/internal/protocol/packets/clientbound"
 	"havry.dev/havry/hopper/internal/protocol/types"
 )
 
@@ -36,14 +36,14 @@ func (h *Hopper) status(conn net.Conn) error {
 
 			_, err = WriteRaw(conn, body)
 		case ListPacketID:
-			players := packet.Players{
+			players := cbound.Players{
 				Max:    h.Config.Motd.MaxPlayers,
 				Online: 0,
 			}
 
 			_, err = WritePacket(conn,
 				ListPacketID,
-				packet.NewList(h.Config.Motd.Description, players, h.favicon),
+				cbound.NewList(h.Config.Motd.Description, players, h.favicon),
 			)
 		}
 

@@ -3,7 +3,7 @@ package server
 import (
 	"net"
 
-	"havry.dev/havry/hopper/internal/protocol/packet"
+	sbound "havry.dev/havry/hopper/internal/protocol/packets/serverbound"
 )
 
 const (
@@ -15,7 +15,7 @@ func (h *Hopper) handshake(conn net.Conn) error {
 	defer conn.Close()
 
 	// new conn always starts with handshake packet
-	p := new(packet.Handshake)
+	p := new(sbound.Handshake)
 	_, _, err := ReadPacket(conn, p)
 	if err != nil {
 		return err
@@ -24,9 +24,8 @@ func (h *Hopper) handshake(conn net.Conn) error {
 	switch int(p.NextState) {
 	case StatusState:
 		return h.status(conn)
-	// TODO implement
 	case LoginState:
-		return nil
+		return h.login(conn)
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-package packet
+package sbound
 
 import (
 	"io"

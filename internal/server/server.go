@@ -1,11 +1,13 @@
 package server
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"log/slog"
 	"net"
 
 	"havry.dev/havry/hopper/internal/config"
+	"havry.dev/havry/hopper/internal/protocol"
 )
 
 // packet handler function
@@ -17,17 +19,28 @@ type Hopper struct {
 
 	// base64 encoded favicon
 	favicon *string
+
+	// rsa public key
+	pubKey rsa.PublicKey
 }
 
 // create new hopper server
 func New(
 	cfg *config.Config,
 	faviconContent *string,
-) *Hopper {
+) (*Hopper, error) {
+	pubKey, err := protocol.GenPubKey()
+	if err != nil {
+		return nil, err
+	}
+
+	slog.Debug("Generated public key successfully")
+
 	return &Hopper{
 		Config:  cfg,
 		favicon: faviconContent,
-	}
+		pubKey:  pubKey,
+	}, nil
 }
 
 // returns address to start on
@@ -51,7 +64,6 @@ func (h *Hopper) Listen() error {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			// TODO replace with custom logger
 			slog.Error("Error occurred while handling tcp conn: " + err.Error())
 			continue
 		}
