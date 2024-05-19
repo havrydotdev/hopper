@@ -5,13 +5,13 @@ import (
 	"io"
 	"log/slog"
 
-	"havry.dev/havry/hopper/internal/protocol/types"
+	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
 const (
 	verifTokenLen = 4
 
-	encryptionID = 0x01
+	EncryptionID int = 0x01
 )
 
 type Encryption struct {
@@ -43,7 +43,7 @@ func NewEncryption(pubKey []byte) (*Encryption, error) {
 }
 
 func (e *Encryption) ID() int {
-	return encryptionID
+	return EncryptionID
 }
 
 func (e *Encryption) WriteTo(w io.Writer) (int64, error) {

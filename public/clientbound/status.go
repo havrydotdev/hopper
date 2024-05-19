@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"io"
 
-	"havry.dev/havry/hopper/internal/protocol/types"
+	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
 const (
+	ListPacketID int = 0x00
+
 	version  = "1.20.4"
 	protocol = 765
 )
@@ -49,6 +51,10 @@ func NewList(
 	list.Version.Protocol = protocol
 
 	return list
+}
+
+func (l *List) ID() int {
+	return ListPacketID
 }
 
 func (l *List) WriteTo(w io.Writer) (int64, error) {

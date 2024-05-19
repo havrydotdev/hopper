@@ -3,7 +3,11 @@ package sbound
 import (
 	"io"
 
-	"havry.dev/havry/hopper/internal/protocol/types"
+	"github.com/gavrylenkoIvan/hopper/public/types"
+)
+
+const (
+	PingPacketID int = 0x01
 )
 
 type Ping struct {

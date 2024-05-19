@@ -1,4 +1,4 @@
-module havry.dev/havry/hopper
+module github.com/gavrylenkoIvan/hopper
 
 go 1.22.1
 

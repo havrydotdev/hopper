@@ -3,7 +3,7 @@ package sbound
 import (
 	"io"
 
-	"havry.dev/havry/hopper/internal/protocol/types"
+	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
 type Handshake struct {

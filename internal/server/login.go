@@ -6,8 +6,8 @@ import (
 	"net"
 
 	"github.com/google/uuid"
-	cbound "havry.dev/havry/hopper/internal/protocol/packets/clientbound"
-	sbound "havry.dev/havry/hopper/internal/protocol/packets/serverbound"
+	cbound "github.com/gavrylenkoIvan/hopper/public/clientbound"
+	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
 )
 
 // TODO: implement login sequence

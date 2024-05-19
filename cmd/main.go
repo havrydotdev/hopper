@@ -4,8 +4,8 @@ import (
 	"log"
 	"log/slog"
 
-	"havry.dev/havry/hopper/internal/config"
-	"havry.dev/havry/hopper/internal/server"
+	"github.com/gavrylenkoIvan/hopper/internal/config"
+	"github.com/gavrylenkoIvan/hopper/internal/server"
 )
 
 func main() {

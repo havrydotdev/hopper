@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"havry.dev/havry/hopper/internal/protocol/types"
+	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
 var (

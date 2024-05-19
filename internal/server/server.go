@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"net"
 
-	"havry.dev/havry/hopper/internal/config"
-	"havry.dev/havry/hopper/internal/protocol"
+	"github.com/gavrylenkoIvan/hopper/internal/config"
+	"github.com/gavrylenkoIvan/hopper/public/helpers"
 )
 
 // packet handler function
@@ -29,7 +29,7 @@ func New(
 	cfg *config.Config,
 	faviconContent *string,
 ) (*Hopper, error) {
-	pubKey, err := protocol.GenPubKey()
+	pubKey, err := helpers.GenPubKey()
 	if err != nil {
 		return nil, err
 	}
