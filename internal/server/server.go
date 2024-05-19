@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/gavrylenkoIvan/hopper/internal/config"
+	"github.com/gavrylenkoIvan/hopper/internal/hopper"
 	"github.com/gavrylenkoIvan/hopper/public/helpers"
 )
 
@@ -72,7 +73,7 @@ func (h *Hopper) Listen() error {
 
 		// handle connection in separate goroutine
 		go func() {
-			err := h.handshake(conn)
+			err := h.handshake(hopper.NewConn(conn))
 			if err != nil {
 				slog.Error(err.Error())
 			}

@@ -1,8 +1,7 @@
 package server
 
 import (
-	"net"
-
+	"github.com/gavrylenkoIvan/hopper/internal/hopper"
 	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
 )
 
@@ -11,12 +10,12 @@ const (
 	LoginState  int = 0x2
 )
 
-func (h *Hopper) handshake(conn net.Conn) error {
+func (h *Hopper) handshake(conn *hopper.Conn) error {
 	defer conn.Close()
 
 	// new conn always starts with handshake packet
 	p := new(sbound.Handshake)
-	_, _, err := ReadPacket(conn, p)
+	_, _, err := conn.ReadPacket(p)
 	if err != nil {
 		return err
 	}

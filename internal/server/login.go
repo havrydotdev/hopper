@@ -3,19 +3,19 @@ package server
 import (
 	"crypto/x509"
 	"log/slog"
-	"net"
 
-	"github.com/google/uuid"
+	"github.com/gavrylenkoIvan/hopper/internal/hopper"
 	cbound "github.com/gavrylenkoIvan/hopper/public/clientbound"
 	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
+	"github.com/google/uuid"
 )
 
 // TODO: implement login sequence
-func (h *Hopper) login(conn net.Conn) error {
+func (h *Hopper) login(conn *hopper.Conn) error {
 	// Read "Login Start" packet
 	// https://wiki.vg/Protocol#Login_Start
 	loginStart := new(sbound.LoginStart)
-	_, _, err := ReadPacket(conn, loginStart)
+	_, _, err := conn.ReadPacket(loginStart)
 	if err != nil {
 		return err
 	}
@@ -35,13 +35,13 @@ func (h *Hopper) login(conn net.Conn) error {
 		return err
 	}
 
-	_, err = WritePacket(conn, encryption.ID(), encryption)
+	_, err = conn.WritePacket(encryption)
 	if err != nil {
 		return err
 	}
 
 	encryptionResp := new(sbound.EncryptionResp)
-	_, _, err = ReadPacket(conn, encryptionResp)
+	_, _, err = conn.ReadPacket(encryptionResp)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,9 @@
 package sbound
 
-import "github.com/gavrylenkoIvan/hopper/public/interfaces"
+import (
+	"io"
+)
 
 type Packet interface {
-	interfaces.Packet
+	io.ReaderFrom
 }
