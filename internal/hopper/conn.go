@@ -2,8 +2,11 @@ package hopper
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"net"
 
+	"github.com/gavrylenkoIvan/hopper/internal/cfb8"
 	cbound "github.com/gavrylenkoIvan/hopper/public/clientbound"
 	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
 	"github.com/gavrylenkoIvan/hopper/public/types"
@@ -14,11 +17,19 @@ var (
 )
 
 type Conn struct {
+	encrypted    bool
+	sharedSecret []byte
+
 	net.Conn
 }
 
 func NewConn(raw net.Conn) *Conn {
-	return &Conn{raw}
+	return &Conn{false, nil, raw}
+}
+
+func (c *Conn) SetSharedSecret(sharedSecret []byte) {
+	c.encrypted = true
+	c.sharedSecret = sharedSecret
 }
 
 // Reads packet from conn
@@ -63,23 +74,37 @@ func (c *Conn) WritePacket(p cbound.Packet) (size types.VarInt, err error) {
 }
 
 // Writes buf into conn, appending it's length with types.VarInt
-func (c *Conn) WriteRaw(buf []byte) (size types.VarInt, err error) {
+func (c *Conn) WriteRaw(buf []byte) (types.VarInt, error) {
 	res := bytes.NewBuffer(nil)
-	size = types.VarInt(len(buf))
-	// write response size to buffer
-	_, err = size.WriteTo(c)
+	size := types.VarInt(len(buf))
+	// write response size into buffer
+	_, err := size.WriteTo(c)
 	if err != nil {
 		return nilVarInt, err
 	}
 
-	// write response body to buffer
+	// write response body into buffer
 	_, err = res.Write(buf)
 	if err != nil {
 		return nilVarInt, err
 	}
 
-	// write all buffer content to w
-	_, err = c.Write(res.Bytes())
+	// encrypt response
+	dst := res.Bytes()
+	if c.encrypted {
+		var block cipher.Block
+		block, err = aes.NewCipher(c.sharedSecret)
+		if err != nil {
+			return nilVarInt, err
+		}
 
-	return
+		stream := cfb8.NewEncrypter(block, c.sharedSecret)
+
+		stream.XORKeyStream(dst, dst)
+	}
+
+	// write all buffer content into w
+	_, err = c.Write(dst)
+
+	return size, err
 }

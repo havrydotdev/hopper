@@ -1,28 +1,30 @@
 package server
 
 import (
+	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
 	"fmt"
 	"log/slog"
 	"net"
 
 	"github.com/gavrylenkoIvan/hopper/internal/config"
 	"github.com/gavrylenkoIvan/hopper/internal/hopper"
-	"github.com/gavrylenkoIvan/hopper/public/helpers"
 )
 
-// packet handler function
-type HandleConn func(conn net.Conn) error
+const PubKeyBits = 1024
 
 type Hopper struct {
-	// port to start server on
+	// Port to start server on
 	Config *config.Config
 
-	// base64 encoded favicon
+	// Base64 encoded favicon
 	favicon *string
 
-	// rsa public key
-	pubKey rsa.PublicKey
+	privKey *rsa.PrivateKey
+
+	// x509-encoded RSA public key
+	pubKey []byte
 }
 
 // create new hopper server
@@ -30,7 +32,12 @@ func New(
 	cfg *config.Config,
 	faviconContent *string,
 ) (*Hopper, error) {
-	pubKey, err := helpers.GenPubKey()
+	privKey, err := rsa.GenerateKey(rand.Reader, PubKeyBits)
+	if err != nil {
+		return nil, err
+	}
+
+	pubKey, err := x509.MarshalPKIXPublicKey(&privKey.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +47,8 @@ func New(
 	return &Hopper{
 		Config:  cfg,
 		favicon: faviconContent,
+
+		privKey: privKey,
 		pubKey:  pubKey,
 	}, nil
 }

@@ -10,8 +10,8 @@ type EncryptionResp struct {
 	SharedSecretLen types.VarInt
 	SharedSecret    types.ByteArr
 
-	VerifyTokenLen types.VarInt
-	VerifyToken    types.ByteArr
+	VerifTokenLen types.VarInt
+	VerifToken    types.ByteArr
 }
 
 func (e *EncryptionResp) ReadFrom(r io.Reader) (int64, error) {
@@ -26,13 +26,13 @@ func (e *EncryptionResp) ReadFrom(r io.Reader) (int64, error) {
 		return 0, err
 	}
 
-	verifyTokenLenN, err := e.VerifyTokenLen.ReadFrom(r)
+	verifyTokenLenN, err := e.VerifTokenLen.ReadFrom(r)
 	if err != nil {
 		return 0, err
 	}
 
-	e.VerifyToken = types.ByteArr(make([]byte, e.SharedSecretLen))
-	verifyTokenN, err := e.VerifyToken.ReadFrom(r)
+	e.VerifToken = types.ByteArr(make([]byte, e.SharedSecretLen))
+	verifyTokenN, err := e.VerifToken.ReadFrom(r)
 
 	return sharedSecretLenN + sharedSecretN + verifyTokenLenN + verifyTokenN, err
 }

@@ -3,7 +3,6 @@ package cbound
 import (
 	"crypto/rand"
 	"io"
-	"log/slog"
 
 	"github.com/gavrylenkoIvan/hopper/public/types"
 )
@@ -47,7 +46,6 @@ func (e *Encryption) ID() int {
 }
 
 func (e *Encryption) WriteTo(w io.Writer) (int64, error) {
-	slog.Debug("", slog.Any("encryption", e))
 	serverIDN, err := e.ServerID.WriteTo(w)
 	if err != nil {
 		return 0, err
