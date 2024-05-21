@@ -17,7 +17,9 @@ var (
 )
 
 type Conn struct {
-	encrypted    bool
+	encrypted bool
+
+	// TODO: do not store it here, replace with cipher.StreamReader ??
 	sharedSecret []byte
 
 	net.Conn
@@ -89,6 +91,7 @@ func (c *Conn) WriteRaw(buf []byte) (types.VarInt, error) {
 		return nilVarInt, err
 	}
 
+	// TODO: move to conn.Write method
 	// encrypt response
 	dst := res.Bytes()
 	if c.encrypted {
