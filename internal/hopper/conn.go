@@ -1,7 +1,6 @@
 package hopper
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"io"
@@ -58,22 +57,16 @@ func (c *Conn) ReadPacketInfo() (size, packetID types.VarInt, err error) {
 // Writes buf into conn, appending
 // it's length with types.VarInt
 func (c *Conn) WritePacket(buf []byte) (int, error) {
-	res := bytes.NewBuffer(nil)
-
-	// write response size into buffer
-	size := types.VarInt(len(buf))
-	_, err := size.WriteTo(c)
+	// write response size into conn
+	sizeN, err := types.VarInt(len(buf)).WriteTo(c)
 	if err != nil {
 		return 0, err
 	}
 
-	// write response body into buffer
-	_, err = res.Write(buf)
-	if err != nil {
-		return 0, err
-	}
+	// write response body into conn
+	n, err := c.Write(buf)
 
-	return c.Write(res.Bytes())
+	return int(sizeN) + n, err
 }
 
 func (c *Conn) Read(b []byte) (n int, err error) {
