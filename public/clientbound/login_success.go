@@ -4,15 +4,24 @@ import (
 	"io"
 
 	"github.com/gavrylenkoIvan/hopper/public/mojang"
+	"github.com/gavrylenkoIvan/hopper/public/packet"
 	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
 const LoginSuccessID int = 0x02
 
-type LoginSuccess struct {
-	UUID       types.UUID
-	Username   types.String
-	Properties types.Array[*Property]
+func NewLoginSuccess(resp *mojang.HasJoinedResponse) ([]byte, error) {
+	props := make([]*Property, len(resp.Properties)-1)
+	for _, prop := range resp.Properties {
+		props = append(props, NewProperty(prop))
+	}
+
+	return packet.Marshal(
+		types.VarInt(LoginSuccessID),
+		types.UUID(resp.ID),
+		types.String(resp.Name),
+		types.Array[*Property](props),
+	)
 }
 
 type Property struct {
@@ -61,39 +70,4 @@ func (p *Property) WriteTo(w io.Writer) (n int64, err error) {
 	}
 
 	return
-}
-
-func NewLoginSuccess(resp *mojang.HasJoinedResponse) *LoginSuccess {
-	p := new(LoginSuccess)
-	p.UUID = types.UUID(resp.ID)
-	p.Username = types.String(resp.Name)
-
-	props := make([]*Property, len(resp.Properties)-1)
-	for _, prop := range resp.Properties {
-		props = append(props, NewProperty(prop))
-	}
-
-	p.Properties = types.Array[*Property](props)
-
-	return p
-}
-
-func (ls *LoginSuccess) ID() int {
-	return LoginSuccessID
-}
-
-func (ls *LoginSuccess) WriteTo(w io.Writer) (int64, error) {
-	uuidN, err := ls.UUID.WriteTo(w)
-	if err != nil {
-		return 0, err
-	}
-
-	usernameN, err := ls.Username.WriteTo(w)
-	if err != nil {
-		return 0, err
-	}
-
-	propsN, err := ls.Properties.WriteTo(w)
-
-	return uuidN + usernameN + propsN, err
 }

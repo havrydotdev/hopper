@@ -1,6 +1,8 @@
 package server
 
 import (
+	"errors"
+
 	"github.com/gavrylenkoIvan/hopper/internal/hopper"
 	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
 )
@@ -14,8 +16,13 @@ func (h *Hopper) handshake(conn *hopper.Conn) error {
 	defer conn.Close()
 
 	// new conn always starts with handshake packet
-	p := new(sbound.Handshake)
-	_, _, err := conn.ReadPacket(p)
+	var p sbound.Handshake
+	_, _, err := conn.ReadPacket(
+		&p.ProtocolVersion,
+		&p.ServerAddress,
+		&p.ServerPort,
+		&p.NextState,
+	)
 	if err != nil {
 		return err
 	}
@@ -27,5 +34,5 @@ func (h *Hopper) handshake(conn *hopper.Conn) error {
 		return h.login(conn)
 	}
 
-	return nil
+	return errors.New("unknown packet")
 }

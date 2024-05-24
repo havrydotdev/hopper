@@ -3,7 +3,6 @@ package mojang
 import (
 	"encoding/json"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -35,13 +34,11 @@ func HasJoined(username string, sharedSecret, publicKey []byte) (*HasJoinedRespo
 
 	u.RawQuery = queryParams.Encode()
 
-	slog.Debug("hasJoined", slog.String("url", "https://sessionserver.mojang.com/session/minecraft/hasJoined?username="+username+"&serverId="+loginHash))
-
-	return makeHasJoinedReq(username, loginHash)
+	return makeHasJoinedReq(u.String())
 }
 
-func makeHasJoinedReq(username, hash string) (*HasJoinedResponse, error) {
-	resp, err := http.Get("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=" + username + "&serverId=" + hash)
+func makeHasJoinedReq(u string) (*HasJoinedResponse, error) {
+	resp, err := http.Get(u)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +51,6 @@ func makeHasJoinedReq(username, hash string) (*HasJoinedResponse, error) {
 
 	var parsedResp HasJoinedResponse
 	err = json.Unmarshal(body, &parsedResp)
-
-	slog.Debug("", slog.Any("resp", parsedResp))
 
 	return &parsedResp, err
 }

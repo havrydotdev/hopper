@@ -4,110 +4,90 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"io"
 	"net"
 
-	"github.com/gavrylenkoIvan/hopper/internal/cfb8"
-	cbound "github.com/gavrylenkoIvan/hopper/public/clientbound"
-	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
+	"github.com/gavrylenkoIvan/hopper/public/cfb8"
+	"github.com/gavrylenkoIvan/hopper/public/packet"
 	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
-var (
-	nilVarInt = types.VarInt(0)
-)
-
 type Conn struct {
-	encrypted bool
+	// connection encrypter and decrypter
+	encrypter cipher.Stream
+	decrypter cipher.Stream
 
-	// TODO: do not store it here, replace with cipher.StreamReader ??
-	sharedSecret []byte
-
+	// raw connection
 	net.Conn
 }
 
 func NewConn(raw net.Conn) *Conn {
-	return &Conn{false, nil, raw}
+	return &Conn{nil, nil, raw}
 }
 
-func (c *Conn) SetSharedSecret(sharedSecret []byte) {
-	c.encrypted = true
-	c.sharedSecret = sharedSecret
+// Sets encryption and decryption for conn
+func (c *Conn) SetEncryption(sharedSecret []byte) error {
+	block, err := aes.NewCipher(sharedSecret)
+	if err != nil {
+		return err
+	}
+
+	c.encrypter = cfb8.NewEncrypter(block, sharedSecret)
+	c.decrypter = cfb8.NewDecrypter(block, sharedSecret)
+
+	return nil
 }
 
-// Reads packet from conn
-// Returns packet's size, id and error if occurred
-func (c *Conn) ReadPacket(p sbound.Packet) (size, packetID types.VarInt, err error) {
+// Reads packet from conn and returns
+// it's size, id and error if occurred
+func (c *Conn) ReadPacket(fields ...io.ReaderFrom) (size, packetID types.VarInt, err error) {
 	size, packetID, err = c.ReadPacketInfo()
 	if err != nil {
-		return nilVarInt, nilVarInt, err
+		return
 	}
 
-	_, err = p.ReadFrom(c)
-	if err != nil {
-		return nilVarInt, nilVarInt, err
-	}
-
-	return
+	return size, packetID, packet.Unmarshal(c, fields...)
 }
 
 // Reads packet size and id from conn
 func (c *Conn) ReadPacketInfo() (size, packetID types.VarInt, err error) {
-	_, err = size.ReadFrom(c)
-	if err != nil {
-		return nilVarInt, nilVarInt, err
-	}
-
-	_, err = packetID.ReadFrom(c)
-	if err != nil {
-		return nilVarInt, nilVarInt, err
-	}
-
+	err = packet.Unmarshal(c, &size, &packetID)
 	return
 }
 
-func (c *Conn) WritePacket(p cbound.Packet) (size types.VarInt, err error) {
-	// marshal packet
-	buf, err := marshalPacket(p.ID(), p)
-	if err != nil {
-		return nilVarInt, err
-	}
-
-	return c.WriteRaw(buf)
-}
-
-// Writes buf into conn, appending it's length with types.VarInt
-func (c *Conn) WriteRaw(buf []byte) (types.VarInt, error) {
+// Writes buf into conn, appending
+// it's length with types.VarInt
+func (c *Conn) WritePacket(buf []byte) (int, error) {
 	res := bytes.NewBuffer(nil)
-	size := types.VarInt(len(buf))
+
 	// write response size into buffer
+	size := types.VarInt(len(buf))
 	_, err := size.WriteTo(c)
 	if err != nil {
-		return nilVarInt, err
+		return 0, err
 	}
 
 	// write response body into buffer
 	_, err = res.Write(buf)
 	if err != nil {
-		return nilVarInt, err
+		return 0, err
 	}
 
-	// TODO: move to conn.Write method
-	// encrypt response
-	dst := res.Bytes()
-	if c.encrypted {
-		var block cipher.Block
-		block, err = aes.NewCipher(c.sharedSecret)
-		if err != nil {
-			return nilVarInt, err
-		}
+	return c.Write(res.Bytes())
+}
 
-		stream := cfb8.NewEncrypter(block, c.sharedSecret)
-
-		stream.XORKeyStream(dst, dst)
+func (c *Conn) Read(b []byte) (n int, err error) {
+	if c.decrypter != nil {
+		c.decrypter.XORKeyStream(b, b)
 	}
 
-	// write all buffer content into w
-	_, err = c.Write(dst)
+	return c.Conn.Read(b)
+}
 
-	return size, err
+func (c *Conn) Write(b []byte) (n int, err error) {
+	if c.encrypter != nil {
+		c.encrypter.XORKeyStream(b, b)
+	}
+
+	return c.Conn.Write(b)
 }
