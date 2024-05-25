@@ -31,6 +31,8 @@ make hot
 
 ## Release History
 
+* 0.1.0
+    * Handle [Login state](https://wiki.vg/Protocol#Login)
 * 0.0.1
     * Implement [server list ping](https://wiki.vg/Server_List_Ping)
 
