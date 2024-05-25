@@ -1,5 +1,7 @@
 HOPPER_BINARY=bin/hopper
 
+.PHONY: build
+
 hot:
 	air
 

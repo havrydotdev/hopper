@@ -1,24 +1,18 @@
-package packet
+package cbound
 
 import (
 	"encoding/json"
-	"io"
 
-	"havry.dev/havry/hopper/internal/protocol/types"
+	"github.com/gavrylenkoIvan/hopper/public/packet"
+	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
 const (
+	ListPacketID int = 0x00
+
 	version  = "1.20.4"
 	protocol = 765
 )
-
-type Ping struct {
-	Payload types.Long
-}
-
-func (s *Ping) ReadFrom(r io.Reader) (int64, error) {
-	return s.Payload.ReadFrom(r)
-}
 
 type Players struct {
 	Max    uint `json:"max"`
@@ -30,6 +24,7 @@ type Players struct {
 	} `json:"sample"`
 }
 
+// https://wiki.vg/Server_List_Ping#Status_Response
 type List struct {
 	Players Players `json:"players"`
 	Favicon *string `json:"favicon"`
@@ -48,7 +43,7 @@ func NewList(
 	desc string,
 	players Players,
 	favicon *string,
-) *List {
+) ([]byte, error) {
 	list := new(List)
 	list.Players = players
 	list.Favicon = favicon
@@ -56,14 +51,13 @@ func NewList(
 	list.Version.Name = version
 	list.Version.Protocol = protocol
 
-	return list
-}
-
-func (l *List) WriteTo(w io.Writer) (int64, error) {
-	buf, err := json.Marshal(l)
+	buf, err := json.Marshal(list)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return types.String(buf).WriteTo(w)
+	return packet.Marshal(
+		types.VarInt(ListPacketID),
+		types.String(buf),
+	)
 }

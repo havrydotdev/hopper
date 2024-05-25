@@ -4,8 +4,8 @@ import (
 	"log"
 	"log/slog"
 
-	"havry.dev/havry/hopper/internal/config"
-	"havry.dev/havry/hopper/internal/server"
+	"github.com/gavrylenkoIvan/hopper/internal/config"
+	"github.com/gavrylenkoIvan/hopper/internal/server"
 )
 
 func main() {
@@ -25,7 +25,12 @@ func main() {
 
 	slog.Info("Config is valid")
 
-	err = server.New(cfg, nil).Listen()
+	hopper, err := server.New(cfg, nil)
+	if err != nil {
+		log.Fatal("Failed to create server instance: ", err)
+	}
+
+	err = hopper.Listen()
 	if err != nil {
 		log.Fatal("Failed to start Hopper server: ", err)
 	}

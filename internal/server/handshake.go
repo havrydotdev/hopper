@@ -1,56 +1,38 @@
 package server
 
 import (
-	"io"
-	"net"
+	"errors"
 
-	"havry.dev/havry/hopper/internal/protocol/packet"
-	"havry.dev/havry/hopper/internal/protocol/types"
+	"github.com/gavrylenkoIvan/hopper/internal/hopper"
+	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
 )
 
 const (
-	ListPacketID int = 0x00
-	PingPacketID int = 0x01
+	StatusState int = 0x01
+	LoginState  int = 0x2
 )
 
-func (h *Hopper) status(conn net.Conn) error {
-	for i := 0; i < 2; i++ {
-		_, packetID, err := ReadPacketInfo(conn)
-		if err != nil {
-			return err
-		}
+func (h *Hopper) handshake(conn *hopper.Conn) error {
+	defer conn.Close()
 
-		switch int(packetID) {
-		case PingPacketID:
-			payload := make([]byte, types.LongBytes)
-			_, err = io.ReadFull(conn, payload)
-			if err != nil {
-				break
-			}
-
-			var body []byte
-			body, err = PrependID(PingPacketID, payload)
-			if err != nil {
-				break
-			}
-
-			_, err = WriteRaw(conn, body)
-		case ListPacketID:
-			players := packet.Players{
-				Max:    h.Config.Motd.MaxPlayers,
-				Online: 0,
-			}
-
-			_, err = WritePacket(conn,
-				ListPacketID,
-				packet.NewList(h.Config.Motd.Description, players, h.favicon),
-			)
-		}
-
-		if err != nil {
-			return err
-		}
+	// new conn always starts with handshake packet
+	var p sbound.Handshake
+	_, _, err := conn.ReadPacket(
+		&p.ProtocolVersion,
+		&p.ServerAddress,
+		&p.ServerPort,
+		&p.NextState,
+	)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	switch int(p.NextState) {
+	case StatusState:
+		return h.status(conn)
+	case LoginState:
+		return h.login(conn)
+	}
+
+	return errors.New("unknown packet")
 }

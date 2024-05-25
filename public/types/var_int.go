@@ -15,7 +15,7 @@ const (
 var ErrTooBig = errors.New("var int is too big")
 
 // Protocol's VarInt data type
-// VarInt on wiki.vg https://wiki.vg/Data_types#Type:VarInt
+// https://wiki.vg/Data_types#Type:VarInt
 type VarInt int
 
 // Implement io.ReaderFrom for VarInt
