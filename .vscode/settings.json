@@ -2,6 +2,5 @@
     "files.exclude": {
         "bin/": true,
         "dist/": true,
-        "tmp/": true
     }
 }

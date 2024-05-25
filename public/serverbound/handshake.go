@@ -4,6 +4,7 @@ import (
 	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
+// https://wiki.vg/Protocol#Handshake
 type Handshake struct {
 	ProtocolVersion types.VarInt
 	ServerAddress   types.String

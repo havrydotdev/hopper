@@ -24,6 +24,7 @@ type Players struct {
 	} `json:"sample"`
 }
 
+// https://wiki.vg/Server_List_Ping#Status_Response
 type List struct {
 	Players Players `json:"players"`
 	Favicon *string `json:"favicon"`

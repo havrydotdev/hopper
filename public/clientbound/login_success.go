@@ -10,6 +10,7 @@ import (
 
 const LoginSuccessID int = 0x02
 
+// https://wiki.vg/Protocol#Login_Success
 func NewLoginSuccess(resp *mojang.HasJoinedResponse) ([]byte, error) {
 	props := make([]*Property, len(resp.Properties)-1)
 	for _, prop := range resp.Properties {
@@ -18,8 +19,11 @@ func NewLoginSuccess(resp *mojang.HasJoinedResponse) ([]byte, error) {
 
 	return packet.Marshal(
 		types.VarInt(LoginSuccessID),
+		// User UUID
 		types.UUID(resp.ID),
+		// Username
 		types.String(resp.Name),
+		// Properties
 		types.Array[*Property](props),
 	)
 }

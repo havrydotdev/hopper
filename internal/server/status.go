@@ -10,6 +10,8 @@ import (
 	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
+// Handle status packet
+// https://wiki.vg/Protocol#Status
 func (h *Hopper) status(conn *hopper.Conn) error {
 	for i := 0; i < 2; i++ {
 		_, packetID, err := conn.ReadPacketInfo()
@@ -33,6 +35,7 @@ func (h *Hopper) status(conn *hopper.Conn) error {
 
 func (h *Hopper) getStatusResp(conn *hopper.Conn, packetID int) ([]byte, error) {
 	switch packetID {
+	//https://wiki.vg/Server_List_Ping#Ping_Request
 	case sbound.PingPacketID:
 		var payload types.Long
 		_, err := payload.ReadFrom(conn)
@@ -45,6 +48,7 @@ func (h *Hopper) getStatusResp(conn *hopper.Conn, packetID int) ([]byte, error) 
 			payload,
 		)
 
+	// https://wiki.vg/Server_List_Ping#Status_Response
 	case cbound.ListPacketID:
 		players := cbound.Players{
 			Max:    h.Config.Motd.MaxPlayers,

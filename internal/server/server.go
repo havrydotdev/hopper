@@ -22,7 +22,6 @@ type Hopper struct {
 	favicon *string
 
 	privKey *rsa.PrivateKey
-
 	// x509-encoded RSA public key
 	pubKey []byte
 }
