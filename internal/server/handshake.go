@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/gavrylenkoIvan/hopper/internal/hopper"
-	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
+	sbound "github.com/gavrylenkoIvan/hopper/public/packet/serverbound"
 )
 
 const (
@@ -29,9 +29,9 @@ func (h *Hopper) handshake(conn *hopper.Conn) error {
 
 	switch int(p.NextState) {
 	case StatusState:
-		return h.status(conn)
+		return h.handleStatus(conn)
 	case LoginState:
-		return h.login(conn)
+		return h.handleLogin(conn)
 	}
 
 	return errors.New("unknown packet")

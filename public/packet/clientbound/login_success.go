@@ -4,20 +4,19 @@ import (
 	"io"
 
 	"github.com/gavrylenkoIvan/hopper/public/mojang"
-	"github.com/gavrylenkoIvan/hopper/public/packet"
 	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
 const LoginSuccessID int = 0x02
 
 // https://wiki.vg/Protocol#Login_Success
-func NewLoginSuccess(resp *mojang.HasJoinedResponse) ([]byte, error) {
+func NewLoginSuccess(resp *mojang.HasJoinedResponse) *Packet {
 	props := make([]*Property, len(resp.Properties)-1)
 	for _, prop := range resp.Properties {
 		props = append(props, NewProperty(prop))
 	}
 
-	return packet.Marshal(
+	return NewPacket(
 		types.VarInt(LoginSuccessID),
 		// User UUID
 		types.UUID(resp.ID),

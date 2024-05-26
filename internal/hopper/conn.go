@@ -54,21 +54,6 @@ func (c *Conn) ReadPacketInfo() (size, packetID types.VarInt, err error) {
 	return
 }
 
-// Writes buf into conn, appending
-// it's length with types.VarInt
-func (c *Conn) WritePacket(buf []byte) (int, error) {
-	// write response size into conn
-	sizeN, err := types.VarInt(len(buf)).WriteTo(c)
-	if err != nil {
-		return 0, err
-	}
-
-	// write response body into conn
-	n, err := c.Write(buf)
-
-	return int(sizeN) + n, err
-}
-
 func (c *Conn) Read(b []byte) (n int, err error) {
 	if c.decrypter != nil {
 		c.decrypter.XORKeyStream(b, b)

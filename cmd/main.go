@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	// get executable's directory
+	// Get executable's directory
 	configPath, err := config.InExDir("config.toml")
 	if err != nil {
 		log.Fatal(err)
@@ -20,7 +20,7 @@ func main() {
 		log.Fatal("Failed to read config: ", err)
 	}
 
-	// initialize hopper logger
+	// Initialize hopper logger
 	cfg.InitLogger()
 
 	slog.Info("Config is valid")

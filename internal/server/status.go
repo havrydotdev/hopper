@@ -4,15 +4,14 @@ import (
 	"errors"
 
 	"github.com/gavrylenkoIvan/hopper/internal/hopper"
-	cbound "github.com/gavrylenkoIvan/hopper/public/clientbound"
-	"github.com/gavrylenkoIvan/hopper/public/packet"
-	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
+	cbound "github.com/gavrylenkoIvan/hopper/public/packet/clientbound"
+	sbound "github.com/gavrylenkoIvan/hopper/public/packet/serverbound"
 	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
 // Handle status packet
 // https://wiki.vg/Protocol#Status
-func (h *Hopper) status(conn *hopper.Conn) error {
+func (h *Hopper) handleStatus(conn *hopper.Conn) error {
 	for i := 0; i < 2; i++ {
 		_, packetID, err := conn.ReadPacketInfo()
 		if err != nil {
@@ -24,7 +23,7 @@ func (h *Hopper) status(conn *hopper.Conn) error {
 			return err
 		}
 
-		_, err = conn.WritePacket(respBody)
+		_, err = respBody.WriteTo(conn)
 		if err != nil {
 			return err
 		}
@@ -33,7 +32,7 @@ func (h *Hopper) status(conn *hopper.Conn) error {
 	return nil
 }
 
-func (h *Hopper) getStatusResp(conn *hopper.Conn, packetID int) ([]byte, error) {
+func (h *Hopper) getStatusResp(conn *hopper.Conn, packetID int) (*cbound.Packet, error) {
 	switch packetID {
 	//https://wiki.vg/Server_List_Ping#Ping_Request
 	case sbound.PingPacketID:
@@ -43,10 +42,10 @@ func (h *Hopper) getStatusResp(conn *hopper.Conn, packetID int) ([]byte, error) 
 			return nil, err
 		}
 
-		return packet.Marshal(
+		return cbound.NewPacket(
 			types.VarInt(sbound.PingPacketID),
 			payload,
-		)
+		), nil
 
 	// https://wiki.vg/Server_List_Ping#Status_Response
 	case cbound.ListPacketID:
@@ -55,7 +54,11 @@ func (h *Hopper) getStatusResp(conn *hopper.Conn, packetID int) ([]byte, error) 
 			Online: 0,
 		}
 
-		return cbound.NewList(h.Config.Motd.Description, players, h.favicon)
+		return cbound.NewList(
+			h.Config.Motd.Description,
+			players,
+			h.favicon,
+		), nil
 	}
 
 	return nil, errors.New("unknown packet id")

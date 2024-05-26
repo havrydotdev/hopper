@@ -28,10 +28,10 @@ type Config struct {
 func Default() *Config {
 	cfg := new(Config)
 
-	// server options
+	// Server options
 	cfg.Server.Port = 25565
 
-	// logger options
+	// Logger options
 	cfg.Logging.Level = "INFO"
 
 	// MOTD options

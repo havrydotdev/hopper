@@ -7,15 +7,16 @@ import (
 	"log/slog"
 
 	"github.com/gavrylenkoIvan/hopper/internal/hopper"
-	cbound "github.com/gavrylenkoIvan/hopper/public/clientbound"
 	"github.com/gavrylenkoIvan/hopper/public/helpers"
 	"github.com/gavrylenkoIvan/hopper/public/mojang"
-	sbound "github.com/gavrylenkoIvan/hopper/public/serverbound"
+	cbound "github.com/gavrylenkoIvan/hopper/public/packet/clientbound"
+	sbound "github.com/gavrylenkoIvan/hopper/public/packet/serverbound"
 	"github.com/google/uuid"
 )
 
 // TODO: add connection compression
-func (h *Hopper) login(conn *hopper.Conn) error {
+// TODO: add offline mode support
+func (h *Hopper) handleLogin(conn *hopper.Conn) error {
 	// Read Login Start packet
 	// https://wiki.vg/Protocol#Login_Start
 	loginStart, err := h.readLoginStart(conn)
@@ -58,14 +59,14 @@ func (h *Hopper) login(conn *hopper.Conn) error {
 
 	// Write Login Success packet
 	// https://wiki.vg/Protocol#Login_Success
-	err = h.writeLoginSuccess(conn, hasJoinedResp)
+	_, err = cbound.NewLoginSuccess(hasJoinedResp).WriteTo(conn)
 	if err != nil {
 		return fmt.Errorf("loginSuccess: %s", err.Error())
 	}
 
 	// Read Login Acknowledged packet
 	// https://wiki.vg/Protocol#Login_Acknowledged
-	err = h.readLoginAcknowledged(conn)
+	_, _, err = conn.ReadPacketInfo()
 	if err != nil {
 		return fmt.Errorf("loginAcknowledged: %s", err.Error())
 	}
@@ -76,8 +77,6 @@ func (h *Hopper) login(conn *hopper.Conn) error {
 }
 
 func (h *Hopper) readLoginStart(conn *hopper.Conn) (*sbound.LoginStart, error) {
-	// Read "Login Start" packet
-	// https://wiki.vg/Protocol#Login_Start
 	loginStart := new(sbound.LoginStart)
 	_, _, err := conn.ReadPacket(
 		&loginStart.Name,
@@ -103,12 +102,7 @@ func (h *Hopper) writeEncryptionReq(conn *hopper.Conn) ([]byte, error) {
 		return nil, err
 	}
 
-	encryption, err := cbound.NewEncryption(h.pubKey, verifyToken)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = conn.WritePacket(encryption)
+	_, err = cbound.NewEncryption(h.pubKey, verifyToken).WriteTo(conn)
 
 	return verifyToken, err
 }
@@ -140,21 +134,4 @@ func (h *Hopper) hasJoined(username string, sharedSecret []byte) (*mojang.HasJoi
 	}
 
 	return hasJoinedResp, nil
-}
-
-func (h *Hopper) writeLoginSuccess(conn *hopper.Conn, hasJoinedResp *mojang.HasJoinedResponse) error {
-	p, err := cbound.NewLoginSuccess(hasJoinedResp)
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.WritePacket(p)
-
-	return err
-}
-
-func (h *Hopper) readLoginAcknowledged(conn *hopper.Conn) error {
-	_, _, err := conn.ReadPacketInfo()
-
-	return err
 }

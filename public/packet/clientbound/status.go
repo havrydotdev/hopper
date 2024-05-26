@@ -3,7 +3,6 @@ package cbound
 import (
 	"encoding/json"
 
-	"github.com/gavrylenkoIvan/hopper/public/packet"
 	"github.com/gavrylenkoIvan/hopper/public/types"
 )
 
@@ -43,7 +42,7 @@ func NewList(
 	desc string,
 	players Players,
 	favicon *string,
-) ([]byte, error) {
+) *Packet {
 	list := new(List)
 	list.Players = players
 	list.Favicon = favicon
@@ -51,12 +50,9 @@ func NewList(
 	list.Version.Name = version
 	list.Version.Protocol = protocol
 
-	buf, err := json.Marshal(list)
-	if err != nil {
-		return nil, err
-	}
+	buf, _ := json.Marshal(list)
 
-	return packet.Marshal(
+	return NewPacket(
 		types.VarInt(ListPacketID),
 		types.String(buf),
 	)
